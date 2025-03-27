@@ -1,0 +1,109 @@
+version: '3.4'
+
+services:
+  # deploy:
+  #   image: deploy
+  #   build:
+  #     context: .
+  #     dockerfile: ./Dockerfile
+  #################################################################################################################################################################
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.4
+    environment:
+      - discovery.type=single-node
+    ports:
+      - "9200:9200"
+    volumes:
+      - ./elasticsearch/config:/usr/share/elasticsearch/config
+      - ./elasticsearch/data:/usr/share/elasticsearch/data
+      - ./elasticsearch/plugins:/usr/share/elasticsearch/plugins
+    privileged: true
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.6.2
+    volumes:
+      - ./logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+      - /Users/zhouwenzhe/Code/task/log:/var/log/task
+    ports:
+      - "5044:5044"
+      - "9600:9600"
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.4
+    ports:
+      - "5601:5601"
+  #################################################################################################################################################################
+  mysql:
+    image: mysql:8
+    ports:
+      - "3306:3306"
+    environment:
+      # 环境变量配置
+      MYSQL_ROOT_PASSWORD: Z00a0319 # root 用户密码
+    volumes:
+      - ./mysql:/var/lib/mysql # 数据持久化卷
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci # 设置字符编码
+  adminer:
+    image: adminer
+    ports:
+      - "8081:8080"
+  #################################################################################################################################################################
+  redis:
+    image: redis:5.0.7
+    command: redis-server /usr/local/etc/redis/redis.conf --requirepass Z00a0319
+    volumes:
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+    ports:
+      - "6379:6379"
+  redis_insight:
+    image: redis/redisinsight
+    volumes:
+      - ./redis_insight/data:/data
+    ports:
+      - "5540:5540"
+  #################################################################################################################################################################
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.1
+    command: etcd --listen-client-urls http://0.0.0.0:2379 --advertise-client-urls http://zwz-env-etcd-1:2379 --max-snapshots 10 --max-wals 10 --auto-compaction-retention=168
+    ports:
+      - "2379:2379"
+  etcd_keeper:
+    image: deltaprojects/etcdkeeper
+    ports:
+      - "8080:8080"
+  #################################################################################################################################################################
+  kafdrop:
+    image: obsidiandynamics/kafdrop
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./kafdrop/kafka.properties:/tmp/kafka.properties:ro
+      - ./kafdrop/kafka.truststore.jks:/tmp/kafka.truststore.jks:ro
+      - ./kafdrop/kafka.keystore.jks:/tmp/kafka.keystore.jks:ro
+    environment:
+      # KAFKA_BROKERCONNECT: "kafka-hf.airsat.com.cn:19097"
+      KAFKA_BROKERCONNECT: "221.214.51.164:19092"
+      KAFKA_PROPERTIES_FILE: /tmp/kafka.properties
+      KAFKA_TRUSTSTORE_FILE: /tmp/kafka.truststore.jks
+      KAFKA_KEYSTORE_FILE: /tmp/kafka.keystore.jks
+
+  #################################################################################################################################################################
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=Z00a0319 # 设置Grafana的管理员密码
+  #################################################################################################################################################################
+  nginx:
+    image: nginx
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
