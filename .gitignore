@@ -1,6 +1,6 @@
 .DS_Store
 elasticsearch/*
 grafana/*
-kafdrop/*
 mysql/*
 redis_insight/*
+AstrBot/*

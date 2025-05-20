@@ -105,6 +105,7 @@ services:
     image: nginx
     ports:
       - "8888:8888"
+      - "8074:8074"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - /Users/zhouwenzhe/Code/microsate:/usr/share/files
@@ -116,10 +117,3 @@ services:
       - "16686:16686"
       - "14268:14268"
   ######################################################################
-  gewechat:
-    image: registry.cn-chengdu.aliyuncs.com/tu1h/wechotd:alpine
-    volumes:
-      - ./gewechat/data:/root/temp
-    ports:
-      - "2531:2531"
-      - "2532:2532"
