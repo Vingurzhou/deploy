@@ -4,3 +4,5 @@ grafana/*
 mysql/*
 redis_insight/*
 AstrBot/*
+napcat/*
+influxdb/*

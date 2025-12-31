@@ -40,19 +40,41 @@ services:
       MYSQL_ROOT_PASSWORD: Z00a0319 # root 用户密码
     volumes:
       - ./mysql:/var/lib/mysql # 数据持久化卷
-    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci # 设置字符编码
+    command:
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      # --default-time-zone=+05:00
   adminer:
     image: adminer
     ports:
       - "8081:8080"
   #################################################################################################################################################################
-  redis:
+  redis-node1:
     image: redis:5.0.7
-    command: redis-server /usr/local/etc/redis/redis.conf --requirepass Z00a0319
-    volumes:
-      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /etc/redis/redis.conf
     ports:
-      - "6379:6379"
+      - "7001:7001"
+      - "17001:17001"
+      - "7002:7002"
+      - "17002:17002"
+      - "7003:7003"
+      - "17003:17003"
+    volumes:
+      - ./redis/node1/redis.conf:/etc/redis/redis.conf
+
+  redis-node2:
+    image: redis:5.0.7
+    command: redis-server /etc/redis/redis.conf
+    volumes:
+      - ./redis/node2/redis.conf:/etc/redis/redis.conf
+    network_mode: "service:redis-node1"  
+
+  redis-node3:
+    image: redis:5.0.7
+    command: redis-server /etc/redis/redis.conf
+    volumes:
+      - ./redis/node3/redis.conf:/etc/redis/redis.conf
+    network_mode: "service:redis-node1"  
   redis_insight:
     image: redis/redisinsight
     volumes:
@@ -117,3 +139,39 @@ services:
       - "16686:16686"
       - "14268:14268"
   ######################################################################
+  searxng:
+    image: docker.io/searxng/searxng:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./searxng:/etc/searxng:rw
+    environment:
+      - SEARXNG_BASE_URL=https://${SEARXNG_HOSTNAME:-localhost}/
+      - UWSGI_WORKERS=${SEARXNG_UWSGI_WORKERS:-4}
+      - UWSGI_THREADS=${SEARXNG_UWSGI_THREADS:-4}
+  #####################################################
+  napcat:
+    image: mlikiowa/napcat-docker:latest
+    environment:
+        - NAPCAT_UID=${NAPCAT_UID}
+        - NAPCAT_GID=${NAPCAT_GID}
+    ports:
+        - 3000:3000
+        - 3001:3001
+        - 6099:6099
+
+######################################################
+  influxdb:
+    image: influxdb:2.7
+    container_name: influxdb
+    ports:
+      - "8086:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: admin123
+      DOCKER_INFLUXDB_INIT_ORG: myorg
+      DOCKER_INFLUXDB_INIT_BUCKET: mybucket
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: mytoken
+    volumes:
+      - ./influxdb:/var/lib/influxdb2

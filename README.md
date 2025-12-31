@@ -18,3 +18,21 @@
 git fetch
 git credential-store get
 ```
+
+```shell
+docker system prune -a
+```
+
+## redis集群
+
+```shell
+docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' deploy-redis-node1-1
+docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' deploy-redis-node2-1
+docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' deploy-redis-node3-1
+
+redis-cli --cluster create \
+127.0.0.1:7001 \
+127.0.0.1:7002 \
+127.0.0.1:7003 \
+--cluster-replicas 0
+```
